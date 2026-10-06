@@ -1,0 +1,35 @@
+# Genie + ML + RAG agents demo. Deploy with:
+#   databricks bundle deploy -t dev --var catalog=<your_catalog> --profile <profile>
+bundle:
+  name: genie-ml-rag-agents-demo
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog catalog with managed storage. The demo creates its own schema inside it.
+  schema:
+    description: Dedicated schema for the demo. The setup job overwrites tables in it, so do not point this at a schema you care about.
+    default: genie_ml_rag_demo
+  volume:
+    description: Volume that holds the campaign documents used for Genie content search.
+    default: campaign_docs
+  endpoint_name:
+    description: Model Serving endpoint name.
+    default: campaign-propensity-demo
+  scale_to_zero:
+    description: '"true" lets the endpoint scale to zero (cheaper, cold start on first call). Use "false" for live demos.'
+    default: "true"
+  warehouse_id:
+    description: SQL warehouse ID used by the Genie space and the smoke tests. Defaults to the warehouse named below; override with --var warehouse_id=<id>.
+    lookup:
+      warehouse: "Serverless Starter Warehouse"
+  genie_title:
+    description: Title of the Genie space. The setup job updates the space with this title if it already exists.
+    default: "Synthetic Campaign Decision Assistant"
+
+targets:
+  dev:
+    default: true
+    mode: development

@@ -1,0 +1,66 @@
+resources:
+  jobs:
+    demo_setup:
+      name: genie-ml-rag-agents-demo-setup
+      description: Builds synthetic data, trains and serves a model, creates a SQL function and a Genie space.
+      max_concurrent_runs: 1
+      timeout_seconds: 7200
+
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: schema
+          default: ${var.schema}
+        - name: volume
+          default: ${var.volume}
+        - name: endpoint_name
+          default: ${var.endpoint_name}
+        - name: scale_to_zero
+          default: ${var.scale_to_zero}
+        - name: warehouse_id
+          default: ${var.warehouse_id}
+        - name: genie_title
+          default: ${var.genie_title}
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "3"
+            dependencies:
+              - "mlflow>=3.1,<4"
+              - "scikit-learn>=1.4"
+              - "databricks-sdk>=0.40"
+
+      tasks:
+        - task_key: build_data_and_model
+          environment_key: default
+          notebook_task:
+            notebook_path: ../src/01_build_data_and_model.py
+
+        - task_key: deploy_endpoint
+          depends_on:
+            - task_key: build_data_and_model
+          environment_key: default
+          notebook_task:
+            notebook_path: ../src/02_deploy_endpoint.py
+
+        - task_key: create_function_and_metadata
+          depends_on:
+            - task_key: deploy_endpoint
+          environment_key: default
+          notebook_task:
+            notebook_path: ../src/03_create_function_and_metadata.py
+
+        - task_key: create_genie_agent
+          depends_on:
+            - task_key: create_function_and_metadata
+          environment_key: default
+          notebook_task:
+            notebook_path: ../src/04_create_genie_agent.py
+
+        - task_key: smoke_test
+          depends_on:
+            - task_key: create_genie_agent
+          environment_key: default
+          notebook_task:
+            notebook_path: ../src/05_smoke_test.py
